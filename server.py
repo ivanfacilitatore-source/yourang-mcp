@@ -6,8 +6,7 @@ import json
 import os
 from typing import Optional
 import httpx
-import uvicorn
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 from pydantic import BaseModel, Field, ConfigDict
 
 API_BASE = "https://api.yourang.ai/v1"
@@ -112,7 +111,7 @@ class ListWorkflowsInput(BaseModel):
     filter: Optional[str] = Field(default=None)
 
 
-@mcp.tool(name="yourang_list_contacts", annotations={"readOnlyHint": True})
+@mcp.tool(name="yourang_list_contacts")
 async def yourang_list_contacts(params: ListContactsInput) -> str:
     """List contacts in YouRang CRM."""
     try:
@@ -124,9 +123,9 @@ async def yourang_list_contacts(params: ListContactsInput) -> str:
         return _handle_error(e)
 
 
-@mcp.tool(name="yourang_get_contact_by_phone", annotations={"readOnlyHint": True})
+@mcp.tool(name="yourang_get_contact_by_phone")
 async def yourang_get_contact_by_phone(params: GetContactByPhoneInput) -> str:
-    """Get a YouRang contact by phone number."""
+    """Get a YouRang contact by phone number in E.164 format."""
     try:
         encoded = params.phone_number.replace("+", "%2B")
         return json.dumps(await _get(f"/contacts/by-phone/{encoded}"), indent=2, ensure_ascii=False)
@@ -134,7 +133,7 @@ async def yourang_get_contact_by_phone(params: GetContactByPhoneInput) -> str:
         return _handle_error(e)
 
 
-@mcp.tool(name="yourang_create_contact", annotations={"readOnlyHint": False})
+@mcp.tool(name="yourang_create_contact")
 async def yourang_create_contact(params: CreateContactInput) -> str:
     """Create a new contact in YouRang."""
     try:
@@ -150,7 +149,7 @@ async def yourang_create_contact(params: CreateContactInput) -> str:
         return _handle_error(e)
 
 
-@mcp.tool(name="yourang_update_contact", annotations={"readOnlyHint": False})
+@mcp.tool(name="yourang_update_contact")
 async def yourang_update_contact(params: UpdateContactInput) -> str:
     """Update a YouRang contact by UUID."""
     try:
@@ -162,7 +161,7 @@ async def yourang_update_contact(params: UpdateContactInput) -> str:
         return _handle_error(e)
 
 
-@mcp.tool(name="yourang_update_contact_by_phone", annotations={"readOnlyHint": False})
+@mcp.tool(name="yourang_update_contact_by_phone")
 async def yourang_update_contact_by_phone(params: UpdateContactByPhoneInput) -> str:
     """Update a YouRang contact by phone number."""
     try:
@@ -174,7 +173,7 @@ async def yourang_update_contact_by_phone(params: UpdateContactByPhoneInput) -> 
         return _handle_error(e)
 
 
-@mcp.tool(name="yourang_list_workflows", annotations={"readOnlyHint": True})
+@mcp.tool(name="yourang_list_workflows")
 async def yourang_list_workflows(params: ListWorkflowsInput) -> str:
     """List all YouRang workflows."""
     try:
@@ -186,7 +185,7 @@ async def yourang_list_workflows(params: ListWorkflowsInput) -> str:
         return _handle_error(e)
 
 
-@mcp.tool(name="yourang_get_workflow", annotations={"readOnlyHint": True})
+@mcp.tool(name="yourang_get_workflow")
 async def yourang_get_workflow(params: GetWorkflowInput) -> str:
     """Get a YouRang workflow by UUID."""
     try:
@@ -195,9 +194,9 @@ async def yourang_get_workflow(params: GetWorkflowInput) -> str:
         return _handle_error(e)
 
 
-@mcp.tool(name="yourang_execute_workflow", annotations={"readOnlyHint": False})
+@mcp.tool(name="yourang_execute_workflow")
 async def yourang_execute_workflow(params: ExecuteWorkflowInput) -> str:
-    """Execute a YouRang workflow."""
+    """Execute a YouRang workflow with optional input data."""
     try:
         return json.dumps(await _post(f"/workflows/{params.workflow_id}/execute", params.input_data or {}), indent=2, ensure_ascii=False)
     except Exception as e:
@@ -205,5 +204,4 @@ async def yourang_execute_workflow(params: ExecuteWorkflowInput) -> str:
 
 
 if __name__ == "__main__":
-    app = mcp.get_asgi_app()
-    uvicorn.run(app, host="0.0.0.0", port=PORT)
+    mcp.run(transport="streamable-http", port=PORT)
