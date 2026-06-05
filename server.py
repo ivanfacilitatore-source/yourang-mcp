@@ -204,4 +204,4 @@ async def yourang_execute_workflow(params: ExecuteWorkflowInput) -> str:
 
 
 if __name__ == "__main__":
-    mcp.run(transport="streamable-http", port=PORT)
+    mcp.run(transport="streamable-http", host="0.0.0.0", port=PORT)
